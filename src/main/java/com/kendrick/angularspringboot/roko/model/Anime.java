@@ -11,6 +11,7 @@ import javax.persistence.Table;
 @Table(name = "anime")
 public class Anime {
 	private long id;
+	private long tvdbId;
 	private String name_english;
 	private String name_japanese;
 	private float rating;
@@ -19,6 +20,28 @@ public class Anime {
 	private String description;
 	private int seasons;
 	private int ongoing;
+	private String malUrl;
+	private String malThumbnail;
+	private String tvdbUrl;
+	private String tvdbThumbnail;
+	
+	//Manual Fields
+	private int hasPrequel;
+	private int prequel;
+	
+	private int hasSequel;
+	private int sequel;
+	
+	private int seen;
+	private int toWatch;
+
+	
+	//Workflow:
+	//Anime gets added via TVDB, if it exists there.
+	//If no season 2, etc shows up, search using MAL and add season 2, 3 etc
+	//Create functionality to link prequels and sequels together in the update page (drop down box showing name / thumbnail of show?)
+	
+	
 	
 	public Anime() {
 		
@@ -27,20 +50,7 @@ public class Anime {
 	public Anime(String name_english) {
 		this.name_english = name_english;
 	}
-	
-	public Anime(String name_english, String name_japanese, 
-			float rating, int year, int episodes, String description, 
-			int seasons, int ongoing) {
-		
-		this.name_english = name_english;
-		this.name_japanese = name_japanese;
-		this.rating = rating;
-		this.year = year;
-		this.episodes = episodes;
-		this.description = description;
-		this.seasons = seasons;
-		this.ongoing = ongoing;
-	}
+
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
@@ -52,6 +62,8 @@ public class Anime {
 		this.id = id;
 	}
 	
+	
+	
 	@Column(name="name_english")
 	public String getName_english() {
 		return name_english;
@@ -61,6 +73,8 @@ public class Anime {
 		this.name_english = name_english;
 	}
 
+	
+	
 	@Column(name="name_japanese")
 	public String getName_japanese() {
 		return name_japanese;
@@ -70,6 +84,8 @@ public class Anime {
 		this.name_japanese = name_japanese;
 	}
 
+	
+	
 	@Column(name="rating")
 	public float getRating() {
 		return rating;
@@ -79,6 +95,8 @@ public class Anime {
 		this.rating = rating;
 	}
 
+	
+	
 	@Column(name="year")
 	public int getYear() {
 		return year;
@@ -88,6 +106,8 @@ public class Anime {
 		this.year = year;
 	}
 
+	
+	
 	@Column(name="episodes")
 	public int getEpisodes() {
 		return episodes;
@@ -97,6 +117,8 @@ public class Anime {
 		this.episodes = episodes;
 	}
 
+	
+	
 	@Column(name="description")
 	public String getDescription() {
 		return description;
@@ -106,6 +128,8 @@ public class Anime {
 		this.description = description;
 	}
 
+	
+	
 	@Column(name="seasons")
 	public int getSeasons() {
 		return seasons;
@@ -115,6 +139,8 @@ public class Anime {
 		this.seasons = seasons;
 	}
 
+	
+	
 	@Column(name="ongoing")
 	public int getOngoing() {
 		return ongoing;
@@ -123,6 +149,78 @@ public class Anime {
 	public void setOngoing(int ongoing) {
 		this.ongoing = ongoing;
 	}
+	
+	
+	
+	@Column(name="malUrl")
+	public String getMalUrl() {
+		return malUrl;
+	}
+
+	public void setMalUrl(String malUrl) {
+		this.malUrl = malUrl;
+	}
+	
+	
+	@Column(name="malThumbnail")
+	public String getMalThumbnail() {
+		return malThumbnail;
+	}
+
+	public void setMalThumbnail(String malThumbnail) {
+		this.malThumbnail = malThumbnail;
+	}
+	
+	
+	@Column(name="tvdbUrl")
+	public String getTvdbUrl() {
+		return tvdbUrl;
+	}
+
+	public void setTvdbUrl(String tvdbUrl) {
+		this.tvdbUrl = tvdbUrl;
+	}
+	
+	
+
+	@Column(name="tvdbThumbnail")
+	public String getTvdbThumbnail() {
+		return tvdbThumbnail;
+	}
+
+	public void setTvdbThumbnail(String tvdbThumbnail) {
+		this.tvdbThumbnail = tvdbThumbnail;
+	}
+	
+	
+	
+	
+	@Column(name="tvdbId")
+	public long getTvdbId() {
+		return tvdbId;
+	}
+	public void setTvdbId(long tvdbId) {
+		this.tvdbId = tvdbId;
+	}
+	
+	@Column(name="seen")
+	public int getSeen() {
+		return seen;
+	}
+
+	public void setSeen(int seen) {
+		this.seen = seen;
+	}
+
+	@Column(name="toWatch")
+	public int getToWatch() {
+		return toWatch;
+	}
+
+	public void setToWatch(int toWatch) {
+		this.toWatch = toWatch;
+	}
+	
 	
     @Override
     public String toString() {

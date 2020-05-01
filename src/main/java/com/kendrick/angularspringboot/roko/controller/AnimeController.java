@@ -1,9 +1,9 @@
 package com.kendrick.angularspringboot.roko.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.validation.Valid;
 
@@ -21,9 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kendrick.angularspringboot.roko.exception.ResourceNotFoundException;
 import com.kendrick.angularspringboot.roko.model.Anime;
-import com.kendrick.angularspringboot.roko.model.Employee;
+import com.kendrick.angularspringboot.roko.model.AnimeSeries;
+import com.kendrick.angularspringboot.roko.model.SearchResult;
 import com.kendrick.angularspringboot.roko.repository.AnimeRepository;
+import com.kendrick.angularspringboot.roko.repository.AnimeSeriesRepository;
+import com.kendrick.angularspringboot.roko.shared.ProcessRunner;
+import com.kendrick.angularspringboot.roko.helper.MALHelper;
+import com.kendrick.angularspringboot.roko.helper.TVDBHelper;
 
+
+//TODO: Review all of the mappings, make sure they are best practice / make sense
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
@@ -33,6 +40,8 @@ public class AnimeController {
 	@Autowired
 	private AnimeRepository animeRepo;
 
+	private ArrayList<SearchResult> results;
+	
     @GetMapping("/anime")
     public List<Anime> getAllAnime() {
         return animeRepo.findAll();
@@ -46,13 +55,90 @@ public class AnimeController {
         return ResponseEntity.ok().body(anime);
     }
     
-    @PostMapping("/anime")
+    //Fetch Anime information from MAL
+    @GetMapping("searchMAL/{name}")
+    public ArrayList<SearchResult> searchAnimeFromMAL(@PathVariable(value = "name") String fetchName)
+            throws ResourceNotFoundException {
+    	
+    	
+		//And is at least 3 characters
+		fetchName = fetchName.trim();
+		fetchName = fetchName.replaceAll("\\s", "%20");
+		
+		System.out.println("Anime to fetch: " + fetchName);
+    	
+		//TODO: Move this into a function inside MALHelper
+		//Commands to run scrapy
+		String[] commands = {"cmd.exe", "/c", "cd \"G:\\Workspace\\roko\\malscraper\" && scrapy crawl search -a anime=\"" + fetchName + "\" -t json -o - > testmyscrape.json"};
+		//Run process builder to run scrapy commands defined above, which will generate a file "testmyjsonscrape"
+		ProcessRunner.runProcessBuilder(commands);
+		
+    	//Parse the resulting json file that was created after running scrapy python script
+    	results = MALHelper.getMALSearchResults();
+        
+        
+        return results;
+    }
+    
+    //Fetch Anime information from TVDB
+    //Will return a JSON response
+    @GetMapping("searchTVDB/{name}")
+    public ArrayList<SearchResult> searchAnimeFromTVDB(@PathVariable(value = "name") String fetchName)
+            throws ResourceNotFoundException {
+
+    	
+		//And is at least 3 characters
+		fetchName = fetchName.trim();
+		fetchName = fetchName.replaceAll("\\s", "%20");
+
+    	TVDBHelper tvdb = new TVDBHelper();
+    	
+    	//Token / login will work for 24hrs unless refreshed. 
+    	//TODO: Find way to check if it's been 24hrs / have a test ping and login if it returns error
+    	tvdb.login();
+    	//Fetch anime name, return SearchResult
+    	results = tvdb.searchForAnime(fetchName);
+        
+        return results;
+    }
+    
+    
+    @PostMapping("anime")
     // When Spring Boot finds an argument annotated with @Valid, it
     // automatically bootstraps the default JSR 380
     // implementation — Hibernate Validator — and validates the argument.
     public Anime createAnime(@Valid @RequestBody final Anime anime) {
         return animeRepo.save(anime);
 
+    }
+    
+    @PutMapping("addMAL")
+    //Add anime from the search list to the catalog
+    public Anime addMALAnime(@Valid @RequestBody final SearchResult animeResult) {
+    	Anime anime = null;
+    	
+    	//will generate the JSON file
+    	MALHelper.runAnimeScrape(animeResult);
+    	
+    	//ParseJSON file and add info to anime object
+    	anime = MALHelper.readJSONAnime();
+    	anime.setMalUrl(animeResult.getUrl());
+    	anime.setMalThumbnail(animeResult.getThumbnail());
+    	anime.setName_english(animeResult.getName());
+    	
+    	//save new anime object
+    	return animeRepo.save(anime);
+    }
+    
+    
+    @PutMapping("addTVDB")
+    //Add anime from the search list to the catalog
+    public Anime addTVDBAnime(@Valid @RequestBody final SearchResult animeResult) {
+    	//TODO: Create TVDB adder using API
+    	Anime anime = TVDBHelper.getAnimeFromTVDB(animeResult);
+    	
+    	//save new anime object
+    	return animeRepo.save(anime);
     }
     
     @PutMapping("anime/{id}")
@@ -75,7 +161,7 @@ public class AnimeController {
         return ResponseEntity.ok(updatedAnime);
     }
     
-    @DeleteMapping("/anime/{id}")
+    @DeleteMapping("anime/{id}")
     public Map<String, Boolean> deleteAnime(@PathVariable(value = "id") Long animeId) 
         throws ResourceNotFoundException {
             Anime anime = animeRepo.findById(animeId).orElseThrow(() -> new ResourceNotFoundException("Anime not found for this id :: " + animeId));
@@ -83,8 +169,9 @@ public class AnimeController {
             Map<String, Boolean> response = new HashMap<>();
             response.put("deleted", Boolean.TRUE);
             return response;
-        }
-	
+    }
+
+    
 }
 
 
