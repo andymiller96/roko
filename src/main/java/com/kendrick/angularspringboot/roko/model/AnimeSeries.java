@@ -1,10 +1,13 @@
 package com.kendrick.angularspringboot.roko.model;
 
+import java.util.List;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 
@@ -15,46 +18,44 @@ import javax.persistence.Table;
 public class AnimeSeries {
 
 	//id that will be used to link anime to the series, auto generated
-	private long seriesId;
+	private long id;
 
 	//contains all of the anime relating to this series, will not have movies or OVAs listed unless they are specified as sequels
 	//Can add seasons automatically, and re-order them via drag and drop?
 	//Would iterate over the seasons array within the page of the series, displaying them each in an accordion like array
 	//private Anime_[] seasons;
 	
-	private int[] idSeasons;
+	
+	private List<Anime> seasons;
 	
 	private String seriesName;
 	
-	/*
-	//Name of the series overall, if each season has a specific, unique name, take the common name or just the name of the first season.
-	private String name;
-	
-	//Link to the MAL thumbnail for the season
+	//Thumbnail of Season 1 to Represent the Entire Series
 	private String malThumbnail;
 	
-	//Link to the TVDB thumbnail image for the series
-	private String tvdbThumbnail;
-	*/
+	private int watchStatus;
 	
+		
+	@OneToMany(
+			mappedBy="series",
+	        cascade = CascadeType.ALL
+	        )
+	public List<Anime> getSeasons() {
+		return seasons;
+	}
+
+	public void setSeasons(List<Anime> seasons) {
+		this.seasons = seasons;
+	}
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	public long getSeriesId() {
-		return seriesId;
+	public long getId() {
+		return id;
 	}
 
-	public void setSeriesId(long seriesId) {
-		this.seriesId = seriesId;
-	}
-
-	@Column(name="id_seasons")
-	public int[] getIdSeasons() {
-		return idSeasons;
-	}
-
-	public void setIdSeasons(int[] idSeasons) {
-		this.idSeasons = idSeasons;
+	public void setId(long id) {
+		this.id = id;
 	}
 	
 	@Column(name="series_name")
@@ -64,6 +65,29 @@ public class AnimeSeries {
 
 	public void setSeriesName(String seriesName) {
 		this.seriesName = seriesName;
+	}
+	
+	@Column(name="mal_thumbnail")
+	public String getMalThumbnail() {
+		return malThumbnail;
+	}
+	
+	public void setMalThumbnail(String malThumbnail) {
+		this.malThumbnail = malThumbnail;
+	}
+	
+	@Column(name="watch_status")
+	public int getWatchStatus() {
+		return this.watchStatus;
+	}
+	
+	public void setWatchStatus(int watchStatus) {
+		this.watchStatus = watchStatus;
+	}
+	
+	
+	public String toString() {
+		return "Name: " + this.getSeriesName() + "seasons: " + this.getSeasons().toString();
 	}
 	
 	

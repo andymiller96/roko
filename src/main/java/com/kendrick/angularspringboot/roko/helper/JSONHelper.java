@@ -138,17 +138,13 @@ public class JSONHelper {
     	int seasons = Integer.parseInt(seasonsString);
     	
     	//is the anime ongoing or ended?
-    	String ongoingString = (String) jsonObj.get("status");
-    	int ongoing = 1;
-    	if(ongoingString.equals("Ended")) {
-    		ongoing = 0;
-    	}
+    	String status = (String) jsonObj.get("status");
     	
     	
     	a.setYear(year);
 		a.setDescription(description);
 		a.setSeasons(seasons);
-		a.setOngoing(ongoing);
+		a.setStatus(status);
 		
 		
 		return a;

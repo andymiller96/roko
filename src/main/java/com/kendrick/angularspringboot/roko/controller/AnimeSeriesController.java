@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.EntityManager;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +25,9 @@ import com.kendrick.angularspringboot.roko.helper.MALHelper;
 import com.kendrick.angularspringboot.roko.model.Anime;
 import com.kendrick.angularspringboot.roko.model.AnimeSeries;
 import com.kendrick.angularspringboot.roko.model.SearchResult;
-import com.kendrick.angularspringboot.roko.repository.AnimeRepository;
 import com.kendrick.angularspringboot.roko.repository.AnimeSeriesRepository;
+import com.kendrick.angularspringboot.roko.service.AnimeSeriesService;
+
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
@@ -35,11 +37,18 @@ public class AnimeSeriesController {
 	@Autowired
 	private AnimeSeriesRepository animeSeriesRepo;
 	
-	@Autowired AnimeRepository animeRepo;
 	
     @GetMapping("/series")
     public List<AnimeSeries> getAllAnimeSeries() {
         return animeSeriesRepo.findAll();
+    }
+    
+    @GetMapping("series/{id}")
+    public ResponseEntity<AnimeSeries> getAnimeById(@PathVariable(value = "id") final Long seriesId)
+            throws ResourceNotFoundException {
+        AnimeSeries series = animeSeriesRepo.findById(seriesId)
+          .orElseThrow(() -> new ResourceNotFoundException("Anime not found for this id :: " + seriesId));
+        return ResponseEntity.ok().body(series);
     }
     
     @PostMapping("/series")
@@ -49,26 +58,7 @@ public class AnimeSeriesController {
     public AnimeSeries createAnimeSeries(@Valid @RequestBody final AnimeSeries anime) {
         return animeSeriesRepo.save(anime);
     }
-    
-    @PutMapping("series/{id}")
-    public ResponseEntity<AnimeSeries> updateAnimeSeries(@PathVariable(value = "id") final Long seriesId,
-            @Valid @RequestBody final AnimeSeries animeDetails) throws ResourceNotFoundException {
-    	AnimeSeries series = animeSeriesRepo.findById(seriesId)
-            .orElseThrow(() -> new ResourceNotFoundException("Anime not found for this id :: " + seriesId));        
-        /*
-        anime.setName_english(animeDetails.getName_english());
-        anime.setName_japanese(animeDetails.getName_japanese());
-        anime.setRating(animeDetails.getRating());
-        anime.setYear(animeDetails.getYear());
-        anime.setEpisodes(animeDetails.getEpisodes());
-        anime.setDescription(animeDetails.getDescription());
-        anime.setSeasons(animeDetails.getSeasons());
-        anime.setOngoing(animeDetails.getOngoing());
-        */
-        
-        final AnimeSeries updatedSeries = animeSeriesRepo.save(series);
-        return ResponseEntity.ok(updatedSeries);
-    }
+
     
     @DeleteMapping("series/{id}")
     public Map<String, Boolean> deleteAnimeSeries(@PathVariable(value = "id") Long seriesId) 
@@ -78,6 +68,30 @@ public class AnimeSeriesController {
             Map<String, Boolean> response = new HashMap<>();
             response.put("deleted", Boolean.TRUE);
             return response;
+    }
+    
+    @PutMapping("series/{id}")
+    public ResponseEntity<AnimeSeries> updateAnimeSeries(@PathVariable(value = "id") final Long seriesId,
+            @Valid @RequestBody final AnimeSeries seriesDetails) throws ResourceNotFoundException {
+    	AnimeSeries series = animeSeriesRepo.findById(seriesId)
+            .orElseThrow(() -> new ResourceNotFoundException("Anime not found for this id :: " + seriesId));    
+    	
+    	
+    	//System.out.println("The anime titles: " + seriesDetails.getSeasons());
+    	ArrayList<Anime> animeList = (ArrayList<Anime>) seriesDetails.getSeasons();
+        
+    	for(int i = 0; i < animeList.size(); i++) {
+    		animeList.get(i).setSeries(series);
+    	}
+    	series.setSeasons(animeList);
+    	series.setWatchStatus(AnimeSeriesService.checkWatchStatus(series));
+    	
+    	
+        final AnimeSeries updatedSeries = animeSeriesRepo.save(series);
+        System.out.println("Seasons: " + updatedSeries.getSeasons());
+        
+        
+        return ResponseEntity.ok(updatedSeries);
     }
     
     
@@ -101,10 +115,18 @@ public class AnimeSeriesController {
     	
     	//Parse JSON file and get a list of all of the Anime
     	animeList = MALHelper.readJSONAnimeSeries("malscraper/series.json");
+    	//Assign Season 1 name as the name of the series
+    	series.setSeriesName(animeList.get(0).getName_english());
+    	//Assign Season 1 thumbnail as thumbnail for series
+    	series.setMalThumbnail(animeList.get(0).getMalThumbnail());
     	
+    	for(int i = 0; i < animeList.size(); i++) {
+    		animeList.get(i).setSeries(series);
+    	}
+    	series.setSeasons(animeList);
     	//save the Animes
     	//TODO: Need to make the JSON that gets parsed above to have all of the Anime data, so will need to use scrapy to get.
-    	animeList = (ArrayList<Anime>) animeRepo.saveAll(animeList);
+    	//animeList = (ArrayList<Anime>) animeRepo.saveAll(animeList);
     	
     	
     	//save new anime object

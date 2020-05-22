@@ -2,13 +2,22 @@ package com.kendrick.angularspringboot.roko.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.kendrick.angularspringboot.roko.Listeners.AnimeListener;
+import com.kendrick.angularspringboot.roko.model.AnimeSeries;
 
 @Entity
 @Table(name = "anime")
+//@EntityListeners(AnimeListener.class)
 public class Anime {
 	private long id;
 	private long tvdbId;
@@ -19,21 +28,18 @@ public class Anime {
 	private int episodes;
 	private String description;
 	private int seasons;
-	private int ongoing;
+	private String status;
 	private String malUrl;
 	private String malThumbnail;
 	private String tvdbUrl;
 	private String tvdbThumbnail;
 	
-	//Manual Fields
-	private int hasPrequel;
-	private int prequel;
+	//green - watched / complete
+	//yellow - watching / in progress
+	private int watchStatus;
 	
-	private int hasSequel;
-	private int sequel;
+	private AnimeSeries series;
 	
-	private int seen;
-	private int toWatch;
 
 	
 	//Workflow:
@@ -41,8 +47,17 @@ public class Anime {
 	//If no season 2, etc shows up, search using MAL and add season 2, 3 etc
 	//Create functionality to link prequels and sequels together in the update page (drop down box showing name / thumbnail of show?)
 	
-	
-	
+	@JsonIgnore 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(nullable = false)
+	public AnimeSeries getSeries() {
+		return this.series;
+	}
+
+	public void setSeries(AnimeSeries series) {
+		this.series = series;
+	}
+
 	public Anime() {
 		
 	}
@@ -141,13 +156,13 @@ public class Anime {
 
 	
 	
-	@Column(name="ongoing")
-	public int getOngoing() {
-		return ongoing;
+	@Column(name="status")
+	public String getStatus() {
+		return status;
 	}
 
-	public void setOngoing(int ongoing) {
-		this.ongoing = ongoing;
+	public void setStatus(String status) {
+		this.status = status;
 	}
 	
 	
@@ -193,8 +208,6 @@ public class Anime {
 	}
 	
 	
-	
-	
 	@Column(name="tvdbId")
 	public long getTvdbId() {
 		return tvdbId;
@@ -203,22 +216,13 @@ public class Anime {
 		this.tvdbId = tvdbId;
 	}
 	
-	@Column(name="seen")
-	public int getSeen() {
-		return seen;
+	@Column(name="watch_status")
+	public int getWatchStatus() {
+		return watchStatus;
 	}
 
-	public void setSeen(int seen) {
-		this.seen = seen;
-	}
-
-	@Column(name="toWatch")
-	public int getToWatch() {
-		return toWatch;
-	}
-
-	public void setToWatch(int toWatch) {
-		this.toWatch = toWatch;
+	public void setWatchStatus(int watchStatus) {
+		this.watchStatus = watchStatus;
 	}
 	
 	

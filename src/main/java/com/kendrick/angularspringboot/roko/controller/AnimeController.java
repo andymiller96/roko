@@ -21,11 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kendrick.angularspringboot.roko.exception.ResourceNotFoundException;
 import com.kendrick.angularspringboot.roko.model.Anime;
-import com.kendrick.angularspringboot.roko.model.AnimeSeries;
 import com.kendrick.angularspringboot.roko.model.SearchResult;
 import com.kendrick.angularspringboot.roko.repository.AnimeRepository;
-import com.kendrick.angularspringboot.roko.repository.AnimeSeriesRepository;
 import com.kendrick.angularspringboot.roko.shared.ProcessRunner;
+
+
+import lombok.extern.log4j.Log4j2;
+
 import com.kendrick.angularspringboot.roko.helper.MALHelper;
 import com.kendrick.angularspringboot.roko.helper.TVDBHelper;
 
@@ -35,12 +37,11 @@ import com.kendrick.angularspringboot.roko.helper.TVDBHelper;
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/api/v1")
+@Log4j2
 public class AnimeController {
 	
 	@Autowired
 	private AnimeRepository animeRepo;
-
-	private ArrayList<SearchResult> results;
 	
     @GetMapping("/anime")
     public List<Anime> getAllAnime() {
@@ -67,14 +68,14 @@ public class AnimeController {
 		
 		System.out.println("Anime to fetch: " + fetchName);
     	
-		//TODO: Move this into a function inside MALHelper
+		//TODO: Move this into a function inside MALHelper? Make it it's own API?
 		//Commands to run scrapy
 		String[] commands = {"cmd.exe", "/c", "cd \"G:\\Workspace\\roko\\malscraper\" && scrapy crawl search -a anime=\"" + fetchName + "\" -t json -o - > testmyscrape.json"};
 		//Run process builder to run scrapy commands defined above, which will generate a file "testmyjsonscrape"
 		ProcessRunner.runProcessBuilder(commands);
 		
     	//Parse the resulting json file that was created after running scrapy python script
-    	results = MALHelper.getMALSearchResults();
+		ArrayList<SearchResult> results = MALHelper.getMALSearchResults();
         
         
         return results;
@@ -97,7 +98,7 @@ public class AnimeController {
     	//TODO: Find way to check if it's been 24hrs / have a test ping and login if it returns error
     	tvdb.login();
     	//Fetch anime name, return SearchResult
-    	results = tvdb.searchForAnime(fetchName);
+    	ArrayList<SearchResult> results = tvdb.searchForAnime(fetchName);
         
         return results;
     }
@@ -154,8 +155,8 @@ public class AnimeController {
         anime.setEpisodes(animeDetails.getEpisodes());
         anime.setDescription(animeDetails.getDescription());
         anime.setSeasons(animeDetails.getSeasons());
-        anime.setOngoing(animeDetails.getOngoing());
-        
+        anime.setStatus(animeDetails.getStatus());
+        anime.setWatchStatus(animeDetails.getWatchStatus());
         
         final Anime updatedAnime = animeRepo.save(anime);
         return ResponseEntity.ok(updatedAnime);

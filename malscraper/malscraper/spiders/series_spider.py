@@ -48,24 +48,55 @@ class SeriesSpider(scrapy.Spider):
         logger = logging.getLogger('testlogger')
         #If not a prequel, we can start
         prequel = response.xpath('//tr/td[text()="Prequel:"]/following-sibling::td/a/@href').get()
-        
-        
-        
-        
-        
         #If we are at the very beginning / first season in the series
         if not(prequel):
-            yield {
-                'name' : response.css('span::text')[1].get(),
-                'url': response.request.url,
-                'thumbnail' : response.css('img').xpath('@data-src')[0].get()
+            aname = response.xpath('//div/span[text()="English:"]/following-sibling::text()').get()
+            if (aname != None):
+                aname = aname.strip()
+            else:
+                aname = response.xpath('//span[@itemprop="name"]/text()').get().strip()
+            
+            name_japanese = response.xpath('//div/span[text()="Japanese:"]/following-sibling::text()').get()
+            if (name_japanese != None):
+                name_japanese = name_japanese.strip()
+                
+            url = response.url
+            thumbnail = response.css('img').xpath('@data-src')[0].get()
+            episodes = response.xpath('//div/span[text()="Episodes:"]/following-sibling::text()').get()
+            if (episodes != None):
+                episodes = episodes.strip()
+            
+            premiered = response.xpath('//div/span[text()="Premiered:"]/following-sibling::a/text()').get()
+            if (not premiered):
+                premiered = response.xpath('//div/span[text()="Aired:"]/following-sibling::text()').get()
+            
+                premiered = premiered.strip()[len(premiered) - 10: len(premiered)]
+            else:
+                premiered = premiered.strip()[len(premiered) - 4: len(premiered)]
+    
+            status = response.xpath('//div/span[text()="Status:"]/following-sibling::text()').get()
+            if (status != None):
+                status = status.strip()
+            synopsis = response.xpath('//span[@itemprop="description"]/text()').getall()
+            score = response.xpath('//div/span[text()="Score:"]/following-sibling::span/text()').get()        
+            
+            yield {    
+                'name_english' : aname,
+                'name_japanese': name_japanese, 
+                'url': url,
+                'thumbnail' : thumbnail,
+                'episodes' : episodes,
+                'premiered' : premiered,
+                'status' : status,
+                'synopsis' : synopsis,
+                'score' : score
             }
         
             next_page = response.xpath('//tr/td[text()="Sequel:"]/following-sibling::td/a/@href').get()
             if next_page:
-                logger.error("In If")
-                url = response.urljoin(response.xpath('//tr/td[text()="Sequel:"]/following-sibling::td/a/@href').get())
-                #logger.error("URL: " + str(url))
+                #url = response.urljoin(response.xpath('//tr/td[text()="Sequel:"]/following-sibling::td/a/text()').get())
+                url = "https://myanimelist.net" + str(response.xpath('//tr/td[text()="Sequel:"]/following-sibling::td/a/@href').get())
+                logger.error("URL" + str(url))
                 yield scrapy.Request(url, callback = self.parseSequel, dont_filter=True)
         #Otherwise keep going to the prequel
         else:
@@ -81,25 +112,54 @@ class SeriesSpider(scrapy.Spider):
         
         logger = logging.getLogger('testlogger')
         logger.error("In other func")
-        yield {
-                 'name' : response.css('span::text')[1].get(),
-                 'url': response.request.url,
-                 'thumbnail' : response.css('img').xpath('@data-src')[0].get()
+        
+        aname = response.xpath('//div/span[text()="English:"]/following-sibling::text()').get()
+        if (aname != None):
+            aname = aname.strip()
+        else:
+            aname = response.xpath('//span[@itemprop="name"]/text()').get().strip()
+        
+        name_japanese = response.xpath('//div/span[text()="Japanese:"]/following-sibling::text()').get()
+        if (name_japanese != None):
+            name_japanese = name_japanese.strip()
+            
+        url = response.url
+        thumbnail = response.css('img').xpath('@data-src')[0].get()
+        episodes = response.xpath('//div/span[text()="Episodes:"]/following-sibling::text()').get()
+        if (episodes != None):
+            episodes = episodes.strip()
+        
+        premiered = response.xpath('//div/span[text()="Premiered:"]/following-sibling::a/text()').get()
+        if (not premiered):
+            logger.error("NOT PREMIERED")
+            premiered = response.xpath('//div/span[text()="Aired:"]/following-sibling::text()').get()
+            premiered = premiered.strip()[len(premiered) - 10: len(premiered)]
+        else:
+            premiered = premiered.strip()[len(premiered) - 4: len(premiered)]
+
+        status = response.xpath('//div/span[text()="Status:"]/following-sibling::text()').get()
+        if (status != None):
+            status = status.strip()
+        synopsis = response.xpath('//span[@itemprop="description"]/text()').getall()
+        score = response.xpath('//div/span[text()="Score:"]/following-sibling::span/text()').get()        
+        
+        yield {    
+            'name_english' : aname,
+            'name_japanese': name_japanese, 
+            'url': url,
+            'thumbnail' : thumbnail,
+            'episodes' : episodes,
+            'premiered' : premiered,
+            'status' : status,
+            'synopsis' : synopsis,
+            'score' : score
         }
         next_page = response.xpath('//tr/td[text()="Sequel:"]/following-sibling::td/a/@href').get()
         if next_page:
             url = response.urljoin(response.xpath('//tr/td[text()="Sequel:"]/following-sibling::td/a/@href').get())
             yield scrapy.Request(url, callback = self.parseSequel, dont_filter=True)
                 
-                
-                
-                
-                
-                
-                
-                
-                
-                
+                         
                 
                 
                 

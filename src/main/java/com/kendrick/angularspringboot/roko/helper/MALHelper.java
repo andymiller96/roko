@@ -12,6 +12,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.stereotype.Service;
 
 import com.kendrick.angularspringboot.roko.model.Anime;
 import com.kendrick.angularspringboot.roko.model.AnimeSeries;
@@ -19,10 +20,8 @@ import com.kendrick.angularspringboot.roko.model.SearchResult;
 import com.kendrick.angularspringboot.roko.shared.ProcessRunner;
 
 //This class holds functions to help scrape the Search Results page when looking for an Anime
+@Service
 public class MALHelper {
-	
-	static ArrayList<SearchResult> results = null;
-	static HashMap<String, SearchResult> map = null;
 
 	
 	//TODO: Revisit this at some point and figure out how to fix encoding issues (Like Candy Boy)
@@ -57,8 +56,8 @@ public class MALHelper {
 	
 	//This function will read the JSON that was created as well as the name file (for ordering purposes, for relevance)
 	public static ArrayList<SearchResult> getMALSearchResults() {
-		map = new HashMap<String, SearchResult>();
-		results = new ArrayList<SearchResult>();
+		HashMap<String, SearchResult> map = new HashMap<String, SearchResult>();
+		ArrayList<SearchResult> results = new ArrayList<SearchResult>();
 		SearchResult sr = null;
 		
 		
@@ -154,14 +153,20 @@ public class MALHelper {
 
     	Anime newAnime = new Anime();
     	
-    	System.out.println("JSONObject : " + anime);
+    	String animeNameEng = (String) anime.get("name_english");
+    	
+    	//System.out.println("JSONObject : " + anime);
     	
     	String animeNameJap = (String) anime.get("name_japanese");
+    	
+    	String malUrl = (String) anime.get("url");
+    	
+    	String malThumbnail = (String) anime.get("thumbnail");
     	
     	//"Uknown" or int
     	String episodesJSON = (String) anime.get("episodes");
     	
-    	System.out.println("episodesJSON : " + episodesJSON);
+    	//System.out.println("episodesJSON : " + episodesJSON);
     	
     	int episodes = 0;
     	
@@ -170,23 +175,23 @@ public class MALHelper {
     	}
     	
     	//"Ongoing or "Finished Airing"
-    	String statusJSON = (String) anime.get("status");
-    	//0 means anime is finished
-    	int status = 0;
-    	
-    	if(statusJSON.equals("Ongoing")) {
-    		status = 1;
-    	}
+    	String status = (String) anime.get("status");
+
     	
     	//Season and Year, think I just want year
     	String premieredJSON = (String) anime.get("premiered");
     	int premiered = Integer.parseInt(premieredJSON.substring(premieredJSON.length()-4, premieredJSON.length()));
     	
     	
-    	String synopsis = (String) anime.get("synopsis");
+    	JSONArray synopsisArr = (JSONArray) anime.get("synopsis");
+    	String synopsis = "";
+    	for(int i = 0; i < synopsisArr.size(); i++) {
+    		synopsis += synopsisArr.get(i);
+    	}
+    	
     	
     	//Float or "N/A"
-    	String ratingJSON = (String) anime.get("rating");
+    	String ratingJSON = (String) anime.get("score");
     	float rating = (float) 0.0;
     	
     	if(!ratingJSON.equals("N/A")) {
@@ -194,16 +199,19 @@ public class MALHelper {
     	}
     	
     	int seasons = 0;
-    	//{"anime": [{ treasure in the world, One Piece. It was this revelation that brought about the Grand Age of Pirates, men who dreamed of finding One Piece\u2014which promises an unlimited amount of riches and fame\u2014and quite possibly the pinnacle of glory and the title of the Pirate King.\n\r\nEnter Monkey D. Luffy, a 17-year-old boy who defies your standard definition of a pirate. Rather than the popular persona of a wicked, hardened, toothless pirate ransacking villages for fun, Luffy\u2019s reason for being a pirate is one of pure wonder: the thought of an exciting adventure that leads him to intriguing people and ultimately, the promised treasure. Following in the footsteps of his childhood hero, Luffy and his crew travel across the Grand Line, experiencing crazy adventures, unveiling dark mysteries and battling strong enemies, all in order to reach the most coveted of all fortunes\u2014One Piece.\n\r\n[Written by MAL Rewrite] ",
-    	//"rating": "8.48"}]}
     	
+    	newAnime.setName_english(animeNameEng);
+    	newAnime.setMalUrl(malUrl);
+    	newAnime.setMalThumbnail(malThumbnail);
     	newAnime.setName_japanese(animeNameJap);
     	newAnime.setDescription(synopsis);
     	newAnime.setEpisodes(episodes);
-    	newAnime.setOngoing(status);
+    	newAnime.setStatus(status);
     	newAnime.setRating(rating);
     	newAnime.setYear(premiered);
     	newAnime.setSeasons(seasons);
+    	//Setting default status as "watched" when adding a series for all of the shows
+    	newAnime.setWatchStatus(2);
     	
     	
     	return newAnime;
